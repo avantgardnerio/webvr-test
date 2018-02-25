@@ -2,6 +2,9 @@ let gl = undefined;
 let shaderProgram;
 let mvMatrix = mat4.create();
 let pMatrix = mat4.create();
+const identity = mat4.create();
+let myMatrix = mat4.create();
+let mMatrix = mat4.create();
 let triangleBuff;
 let lineBuff;
 let vrDisplay;
@@ -45,6 +48,7 @@ const initShaders = async () => {
     shaderProgram.vertPosAttr = gl.getAttribLocation(shaderProgram, `aVertexPosition`);
     gl.enableVertexAttribArray(shaderProgram.vertPosAttr);
 
+    shaderProgram.mMatrix = gl.getUniformLocation(shaderProgram, `mMatrix`);
     shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, `uPMatrix`);
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, `uMVMatrix`);
 };
@@ -72,13 +76,18 @@ const initBuffers = () => {
 
 const render = (t) => {
     vrDisplay.getFrameData(frameData);
+    mat4.identity(mMatrix);
+    mat4.identity(identity);
+    gl.uniformMatrix4fv(shaderProgram.mMatrix, false, mMatrix);
     if (vrDisplay.isPresenting) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Left
+        mat4.identity(myMatrix);
+        mat4.multiply(frameData.leftProjectionMatrix, frameData.leftViewMatrix, myMatrix);
         gl.viewport(0, 0, gl.viewportWidth / 2, gl.viewportHeight);
-        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.leftProjectionMatrix);
-        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, frameData.leftViewMatrix);
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, myMatrix);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, identity);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
@@ -89,9 +98,11 @@ const render = (t) => {
         gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
 
         // Right
+        mat4.identity(myMatrix);
+        mat4.multiply(frameData.rightProjectionMatrix, frameData.rightViewMatrix, myMatrix);
         gl.viewport(gl.viewportWidth / 2, 0, gl.viewportWidth / 2, gl.viewportHeight);
-        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.rightProjectionMatrix);
-        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, frameData.rightViewMatrix);
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, myMatrix);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, identity);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
