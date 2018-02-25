@@ -47,11 +47,6 @@ const initShaders = async () => {
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, `uMVMatrix`);
 };
 
-const setMatrixUniforms = () => {
-    gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-};
-
 const initBuffers = () => {
     vertBuff = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
@@ -77,7 +72,8 @@ const render = (t) => {
         mat4.rotateZ(mvMatrix, t * 0.001);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
-        setMatrixUniforms();
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.leftProjectionMatrix);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, frameData.leftViewMatrix);
         gl.drawArrays(gl.TRIANGLES, 0, vertBuff.numItems);
 
         // Right
@@ -87,7 +83,8 @@ const render = (t) => {
         mat4.rotateZ(mvMatrix, t * 0.001);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
-        setMatrixUniforms();
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.rightProjectionMatrix);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, frameData.rightViewMatrix);
         gl.drawArrays(gl.TRIANGLES, 0, vertBuff.numItems);
 
         vrDisplay.submitFrame();
@@ -102,7 +99,8 @@ const render = (t) => {
         mat4.rotateZ(mvMatrix, t * 0.001);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
-        setMatrixUniforms();
+        gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
         gl.drawArrays(gl.TRIANGLES, 0, vertBuff.numItems);
 
         window.requestAnimationFrame(render);
