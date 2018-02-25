@@ -4,6 +4,7 @@ let mvMatrix = mat4.create();
 let pMatrix = mat4.create();
 let vertBuff;
 let vrDisplay;
+let gamepads = [];
 const frameData = new VRFrameData();
 
 const initGL = (canvas) => {
@@ -51,9 +52,9 @@ const initBuffers = () => {
     vertBuff = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
     const vertices = [
-        0.0, 1.0, 0.0,
-        -1.0, -1.0, 0.0,
-        1.0, -1.0, 0.0
+        0.0, 0.5, -1.0,
+        -0.5, -0.5, -1.0,
+        0.5, -0.5, -1.0
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     vertBuff.itemSize = 3;
@@ -67,9 +68,6 @@ const render = (t) => {
 
         // Left
         gl.viewport(0, 0, gl.viewportWidth / 2, gl.viewportHeight);
-        mat4.identity(mvMatrix);
-        mat4.translate(mvMatrix, [0.0, 0.0, -7.0]);
-        mat4.rotateZ(mvMatrix, t * 0.001);
         gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.leftProjectionMatrix);
@@ -106,21 +104,6 @@ const render = (t) => {
         window.requestAnimationFrame(render);
     }
 };
-
-const reportGamepads = () => {
-    // const gamepads = navigator.getGamepads();
-    // console.log(gamepads.length + ' controllers');
-    // for (let i = 0; i < gamepads.length; ++i) {
-    //     const gp = gamepads[i];
-    //     console.log(`Gamepad ${gp.index} ${gp.id}` + ')');
-    //     console.log(`Associated with VR Display ID: ${gp.displayId}`);
-    //     console.log(`Gamepad associated with which hand ${gp.hand}`);
-    //     console.log(`Available haptic actuators: ${gp.hapticActuators.length}`);
-    //     console.log(`Gamepad can return position info: ${gp.pose.hasPosition}`);
-    //     console.log(`Gamepad can return orientation info: ${gp.pose.hasOrientation}`);
-    // }
-};
-
 window.onload = async () => {
     const canvas = document.createElement(`canvas`);
     canvas.width = 500;
@@ -128,7 +111,6 @@ window.onload = async () => {
     canvas.onclick = async () => {
         try {
             const res = await vrDisplay.requestPresent([{source: canvas}]);
-            setTimeout(reportGamepads, 1000);
         } catch (ex) {
             console.error(ex);
         }
@@ -152,9 +134,12 @@ window.onload = async () => {
 
     window.addEventListener('gamepadconnected', (e) => {
         console.log(`Gamepad ${e.gamepad.index}`);
+        gamepads = navigator.getGamepads();
+        console.log(gamepads);
     });
     window.addEventListener('gamepaddisconnected', (e) => {
         console.log(`Gamepad ${e.gamepad.index}`);
+        gamepads = navigator.getGamepads();
     });
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
