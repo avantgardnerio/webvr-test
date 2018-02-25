@@ -93,6 +93,9 @@ const render = (t) => {
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
 
+        mat4.identity(myMatrix);
+        if(gamepads.length > 0) mat4.translate(myMatrix, gamepads[0].pose.position);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, myMatrix);
         gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
@@ -108,6 +111,9 @@ const render = (t) => {
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
 
+        mat4.identity(myMatrix);
+        if(gamepads.length > 0) mat4.translate(myMatrix, gamepads[0].pose.position);
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, myMatrix);
         gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
