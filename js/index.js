@@ -78,8 +78,12 @@ const drawScene = () => {
     gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
 };
 
-const webGLStart = async () => {
-    const canvas = document.getElementById(`lesson01-canvas`);
+window.onload = async () => {
+    const canvas = document.createElement(`canvas`);
+    canvas.width = 500;
+    canvas.height = 500;
+    document.body.appendChild(canvas);
+
     initGL(canvas);
     await initShaders();
     initBuffers();
