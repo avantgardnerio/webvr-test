@@ -63,7 +63,7 @@ const initBuffers = () => {
     triangleVertexPositionBuffer.numItems = 3;
 };
 
-const drawScene = () => {
+const drawScene = (t) => {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -71,11 +71,14 @@ const drawScene = () => {
 
     mat4.identity(mvMatrix);
 
-    mat4.translate(mvMatrix, [-1.5, 0.0, -7.0]);
+    mat4.translate(mvMatrix, [0.0, 0.0, -7.0]);
+    mat4.rotateZ(mvMatrix, t * 0.001);
     gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
     setMatrixUniforms();
     gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
+
+    window.requestAnimationFrame(drawScene);
 };
 
 window.onload = async () => {
@@ -91,5 +94,5 @@ window.onload = async () => {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    drawScene();
+    window.requestAnimationFrame(drawScene);
 };
