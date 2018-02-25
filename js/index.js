@@ -2,7 +2,8 @@ let gl = undefined;
 let shaderProgram;
 let mvMatrix = mat4.create();
 let pMatrix = mat4.create();
-let vertBuff;
+let triangleBuff;
+let lineBuff;
 let vrDisplay;
 let gamepads = [];
 const frameData = new VRFrameData();
@@ -49,16 +50,24 @@ const initShaders = async () => {
 };
 
 const initBuffers = () => {
-    vertBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
+    // Triangle
+    triangleBuff = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
     const vertices = [
         0.0, 0.5, -1.0,
         -0.5, -0.5, -1.0,
         0.5, -0.5, -1.0
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    vertBuff.itemSize = 3;
-    vertBuff.numItems = 3;
+    triangleBuff.itemSize = 3;
+    triangleBuff.numItems = 3;
+
+    // lines
+    lineBuff = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, -0.5, 0.0, -1.0, -0.5]), gl.STATIC_DRAW);
+    lineBuff.itemSize = 3;
+    lineBuff.numItems = 2;
 };
 
 const render = (t) => {
@@ -68,22 +77,29 @@ const render = (t) => {
 
         // Left
         gl.viewport(0, 0, gl.viewportWidth / 2, gl.viewportHeight);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.leftProjectionMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, frameData.leftViewMatrix);
-        gl.drawArrays(gl.TRIANGLES, 0, vertBuff.numItems);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
+        gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
+        gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
 
         // Right
         gl.viewport(gl.viewportWidth / 2, 0, gl.viewportWidth / 2, gl.viewportHeight);
-        mat4.identity(mvMatrix);
-        mat4.translate(mvMatrix, [0.0, 0.0, -7.0]);
-        mat4.rotateZ(mvMatrix, t * 0.001);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, frameData.rightProjectionMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, frameData.rightViewMatrix);
-        gl.drawArrays(gl.TRIANGLES, 0, vertBuff.numItems);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
+        gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
+        gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
 
         vrDisplay.submitFrame();
         vrDisplay.requestAnimationFrame(render);
@@ -95,11 +111,11 @@ const render = (t) => {
 
         mat4.translate(mvMatrix, [0.0, 0.0, -7.0]);
         mat4.rotateZ(mvMatrix, t * 0.001);
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, vertBuff.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
+        gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-        gl.drawArrays(gl.TRIANGLES, 0, vertBuff.numItems);
+        gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
 
         window.requestAnimationFrame(render);
     }
