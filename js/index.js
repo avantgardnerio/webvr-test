@@ -107,6 +107,20 @@ const render = (t) => {
     }
 };
 
+const reportGamepads = () => {
+    // const gamepads = navigator.getGamepads();
+    // console.log(gamepads.length + ' controllers');
+    // for (let i = 0; i < gamepads.length; ++i) {
+    //     const gp = gamepads[i];
+    //     console.log(`Gamepad ${gp.index} ${gp.id}` + ')');
+    //     console.log(`Associated with VR Display ID: ${gp.displayId}`);
+    //     console.log(`Gamepad associated with which hand ${gp.hand}`);
+    //     console.log(`Available haptic actuators: ${gp.hapticActuators.length}`);
+    //     console.log(`Gamepad can return position info: ${gp.pose.hasPosition}`);
+    //     console.log(`Gamepad can return orientation info: ${gp.pose.hasOrientation}`);
+    // }
+};
+
 window.onload = async () => {
     const canvas = document.createElement(`canvas`);
     canvas.width = 500;
@@ -114,6 +128,7 @@ window.onload = async () => {
     canvas.onclick = async () => {
         try {
             const res = await vrDisplay.requestPresent([{source: canvas}]);
+            setTimeout(reportGamepads, 1000);
         } catch (ex) {
             console.error(ex);
         }
@@ -125,7 +140,7 @@ window.onload = async () => {
     initBuffers();
 
     const displays = await navigator.getVRDisplays();
-    if(displays.length < 1) alert(`No headset detected!`);
+    if (displays.length < 1) alert(`No headset detected!`);
     vrDisplay = displays[0];
     vrDisplay.depthNear = 0.1;
     vrDisplay.depthFar = 1024.0;
@@ -134,6 +149,13 @@ window.onload = async () => {
     } else {
         //console.log(res);
     }
+
+    window.addEventListener('gamepadconnected', (e) => {
+        console.log(`Gamepad ${e.gamepad.index}`);
+    });
+    window.addEventListener('gamepaddisconnected', (e) => {
+        console.log(`Gamepad ${e.gamepad.index}`);
+    });
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
