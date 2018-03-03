@@ -12,6 +12,53 @@ let lineBuff;
 let vrDisplay;
 let gamepads = [];
 const frameData = new VRFrameData();
+let canvas;
+
+window.onload = async () => {
+    canvas = document.createElement(`canvas`);
+    canvas.width = 500;
+    canvas.height = 500;
+    canvas.style.height = `100%`;
+    canvas.style.width = `100%`;
+    canvas.onclick = async () => {
+        try {
+            const res = await vrDisplay.requestPresent([{source: canvas}]);
+        } catch (ex) {
+            console.error(ex);
+        }
+    };
+    document.body.appendChild(canvas);
+
+    initGL(canvas);
+    await initShaders();
+    initBuffers();
+
+    const displays = await navigator.getVRDisplays();
+    if (displays.length < 1) alert(`No headset detected!`);
+    vrDisplay = displays[0];
+    vrDisplay.depthNear = 0.1;
+    vrDisplay.depthFar = 1024.0;
+    if (vrDisplay.capabilities.canPresent !== true) {
+        alert(`Headset cannot present!`);
+    }
+
+    window.addEventListener('gamepadconnected', (e) => {
+        console.log(`Gamepad ${e.gamepad.index}`);
+        gamepads = navigator.getGamepads();
+        console.log(gamepads);
+    });
+    window.addEventListener('gamepaddisconnected', (e) => {
+        console.log(`Gamepad ${e.gamepad.index}`);
+        gamepads = navigator.getGamepads();
+    });
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+
+    window.requestAnimationFrame(render);
+    window.addEventListener(`resize`, onResize, false);
+    onResize();
+};
 
 const initGL = (canvas) => {
     gl = canvas.getContext(`webgl`);
@@ -19,17 +66,16 @@ const initGL = (canvas) => {
     gl.viewportHeight = canvas.height;
 };
 
-const getShader = async (url) => {
-    const code = await (await fetch(url)).text();
-    const type = url.endsWith(`.frag`) ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER;
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, code);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        const msg = gl.getShaderInfoLog(shader);
-        throw new Error(`Error compiling shader ${url}: ${msg}`);
+const onResize = () => {
+    if (vrDisplay && vrDisplay.isPresenting) {
+        const leftEye = vrDisplay.getEyeParameters(`left`);
+        const rightEye = vrDisplay.getEyeParameters(`right`);
+        canvas.width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
+        canvas.height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
+    } else {
+        canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+        canvas.height = canvas.offsetHeight * window.devicePixelRatio;
     }
-    return shader;
 };
 
 const initShaders = async () => {
@@ -79,6 +125,19 @@ const initBuffers = () => {
     lineBuff.numItems = 2;
 };
 
+const getShader = async (url) => {
+    const code = await (await fetch(url)).text();
+    const type = url.endsWith(`.frag`) ? gl.FRAGMENT_SHADER : gl.VERTEX_SHADER;
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, code);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const msg = gl.getShaderInfoLog(shader);
+        throw new Error(`Error compiling shader ${url}: ${msg}`);
+    }
+    return shader;
+};
+
 const getPoseMatrix = (out, pose) => {
     mat4.fromRotationTranslation(out, pose.orientation, pose.position);
     mat4.multiply(out, vrDisplay.stageParameters.sittingToStandingTransform, out);
@@ -96,7 +155,7 @@ const render = (t) => {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // Left
-        gl.viewport(0, 0, gl.viewportWidth / 2, gl.viewportHeight);
+        gl.viewport(0, 0, canvas.width / 2, canvas.height);
         getStandingViewMatrix(viewMat, frameData.leftViewMatrix);
         gl.uniformMatrix4fv(shaderProgram.projectionMat, false, frameData.leftProjectionMatrix);
         gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
@@ -124,7 +183,7 @@ const render = (t) => {
         gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
 
         // Right
-        gl.viewport(gl.viewportWidth / 2, 0, gl.viewportWidth / 2, gl.viewportHeight);
+        gl.viewport(canvas.width / 2, 0, canvas.width / 2, canvas.height);
         getStandingViewMatrix(viewMat, frameData.rightViewMatrix);
         gl.uniformMatrix4fv(shaderProgram.projectionMat, false, frameData.rightProjectionMatrix);
         gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
@@ -169,47 +228,4 @@ const render = (t) => {
 
         window.requestAnimationFrame(render);
     }
-};
-window.onload = async () => {
-    const canvas = document.createElement(`canvas`);
-    canvas.width = 500;
-    canvas.height = 500;
-    canvas.onclick = async () => {
-        try {
-            const res = await vrDisplay.requestPresent([{source: canvas}]);
-        } catch (ex) {
-            console.error(ex);
-        }
-    };
-    document.body.appendChild(canvas);
-
-    initGL(canvas);
-    await initShaders();
-    initBuffers();
-
-    const displays = await navigator.getVRDisplays();
-    if (displays.length < 1) alert(`No headset detected!`);
-    vrDisplay = displays[0];
-    vrDisplay.depthNear = 0.1;
-    vrDisplay.depthFar = 1024.0;
-    if (vrDisplay.capabilities.canPresent !== true) {
-        alert(`Headset cannot present!`);
-    } else {
-        //console.log(res);
-    }
-
-    window.addEventListener('gamepadconnected', (e) => {
-        console.log(`Gamepad ${e.gamepad.index}`);
-        gamepads = navigator.getGamepads();
-        console.log(gamepads);
-    });
-    window.addEventListener('gamepaddisconnected', (e) => {
-        console.log(`Gamepad ${e.gamepad.index}`);
-        gamepads = navigator.getGamepads();
-    });
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-
-    window.requestAnimationFrame(render);
 };
