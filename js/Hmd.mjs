@@ -1,6 +1,5 @@
 export default class Hmd {
-    constructor(gl, canvas, shaderProgram) {
-        this.gl = gl;
+    constructor(canvas, shaderProgram) {
         this.canvas = canvas;
         this.shaderProgram = shaderProgram;
 
@@ -10,6 +9,17 @@ export default class Hmd {
         this.identity = mat4.create();
         this.viewMat = mat4.create();
         this.frameData = new VRFrameData();
+
+        this.gl = canvas.getContext(`webgl`);
+        this.gl.viewportWidth = this.canvas.width;
+        this.gl.viewportHeight = this.canvas.height;
+        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        this.gl.enable(this.gl.DEPTH_TEST);
+    }
+
+    addToScene(renderable) {
+        renderable.init(this.gl);
+        this.scene.push(renderable);
     }
 
     async init() {
@@ -23,8 +33,45 @@ export default class Hmd {
         if (this.vrDisplay.capabilities.canPresent !== true) {
             throw new Error(`Headset cannot present!`);
         }
+        await this.initShaders();
         window.requestAnimationFrame((t) => this.render(t));
     }
+
+    async getShader(url) {
+        const code = await (await fetch(url)).text();
+        const type = url.endsWith(`.frag`) ? this.gl.FRAGMENT_SHADER : this.gl.VERTEX_SHADER;
+        const shader = this.gl.createShader(type);
+        this.gl.shaderSource(shader, code);
+        this.gl.compileShader(shader);
+        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+            const msg = this.gl.getShaderInfoLog(shader);
+            throw new Error(`Error compiling shader ${url}: ${msg}`);
+        }
+        return shader;
+    }
+
+    async initShaders() {
+        const fragmentShader = await this.getShader(`shader/index.frag`);
+        const vertexShader = await this.getShader(`shader/index.vert`);
+
+        this.shaderProgram = this.gl.createProgram();
+        this.gl.attachShader(this.shaderProgram, vertexShader);
+        this.gl.attachShader(this.shaderProgram, fragmentShader);
+        this.gl.linkProgram(this.shaderProgram);
+
+        if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
+            throw new Error(`Could not initialise shaders`);
+        }
+
+        this.gl.useProgram(this.shaderProgram);
+
+        this.shaderProgram.vertPosAttr = this.gl.getAttribLocation(this.shaderProgram, `aVertexPosition`);
+        this.gl.enableVertexAttribArray(this.shaderProgram.vertPosAttr);
+
+        this.shaderProgram.projectionMat = this.gl.getUniformLocation(this.shaderProgram, `projectionMat`);
+        this.shaderProgram.viewMat = this.gl.getUniformLocation(this.shaderProgram, `viewMat`);
+        this.shaderProgram.modelMat = this.gl.getUniformLocation(this.shaderProgram, `modelMat`);
+    };
 
     getStandingViewMatrix(out, view) {
         mat4.invert(out, this.vrDisplay.stageParameters.sittingToStandingTransform);
