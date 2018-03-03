@@ -146,68 +146,44 @@ const getStandingViewMatrix = (out, view) => {
     mat4.multiply(out, view, out);
 };
 
+const renderEye = (left, view, projMat) => {
+    gl.viewport(left, 0, canvas.width / 2, canvas.height);
+    getStandingViewMatrix(viewMat, view);
+    gl.uniformMatrix4fv(shaderProgram.projectionMat, false, projMat);
+    gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
+
+    // Triangles
+    gl.uniformMatrix4fv(shaderProgram.modelMat, false, identity);
+    gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
+    gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
+
+    // Controller
+    mat4.identity(myMatrix);
+    mat4.identity(gamepadMatHandle);
+    if (gamepads.length > 0) {
+        getPoseMatrix(myMatrix, gamepads[0].pose);
+        mat4.identity(gamepadMatTemp);
+        mat4.translate(gamepadMatTemp, gamepadMatTemp, [0, -0.5, -0.3]);
+        mat4.rotateX(gamepadMatTemp, gamepadMatTemp, -Math.PI * 0.2);
+        mat4.scale(gamepadMatTemp, gamepadMatTemp, [0.25, 0.25, 0.5]);
+        mat4.multiply(gamepadMatHandle, myMatrix, gamepadMatTemp);
+    }
+    gl.uniformMatrix4fv(shaderProgram.modelMat, false, gamepadMatHandle);
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
+    gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
+};
+
 const render = (t) => {
     vrDisplay.getFrameData(frameData);
     mat4.identity(identity);
     if (vrDisplay.isPresenting) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        // Left
-        gl.viewport(0, 0, canvas.width / 2, canvas.height);
-        getStandingViewMatrix(viewMat, frameData.leftViewMatrix);
-        gl.uniformMatrix4fv(shaderProgram.projectionMat, false, frameData.leftProjectionMatrix);
-        gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
-
-        // Triangles
-        gl.uniformMatrix4fv(shaderProgram.modelMat, false, identity);
-        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
-
-        // Controller
-        mat4.identity(myMatrix);
-        mat4.identity(gamepadMatHandle);
-        if (gamepads.length > 0) {
-            getPoseMatrix(myMatrix, gamepads[0].pose);
-            mat4.identity(gamepadMatTemp);
-            mat4.translate(gamepadMatTemp, gamepadMatTemp, [0, -0.5, -0.3]);
-            mat4.rotateX(gamepadMatTemp, gamepadMatTemp, -Math.PI * 0.2);
-            mat4.scale(gamepadMatTemp, gamepadMatTemp, [0.25, 0.25, 0.5]);
-            mat4.multiply(gamepadMatHandle, myMatrix, gamepadMatTemp);
-        }
-        gl.uniformMatrix4fv(shaderProgram.modelMat, false, gamepadMatHandle);
-        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
-
-        // Right
-        gl.viewport(canvas.width / 2, 0, canvas.width / 2, canvas.height);
-        getStandingViewMatrix(viewMat, frameData.rightViewMatrix);
-        gl.uniformMatrix4fv(shaderProgram.projectionMat, false, frameData.rightProjectionMatrix);
-        gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
-
-        // Triangles
-        gl.uniformMatrix4fv(shaderProgram.modelMat, false, identity);
-        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
-
-        // Controller
-        mat4.identity(myMatrix);
-        mat4.identity(gamepadMatHandle);
-        if (gamepads.length > 0) {
-            getPoseMatrix(myMatrix, gamepads[0].pose);
-            mat4.identity(gamepadMatTemp);
-            mat4.translate(gamepadMatTemp, gamepadMatTemp, [0, -0.5, -0.3]);
-            mat4.rotateX(gamepadMatTemp, gamepadMatTemp, -Math.PI * 0.2);
-            mat4.scale(gamepadMatTemp, gamepadMatTemp, [0.25, 0.25, 0.5]);
-            mat4.multiply(gamepadMatHandle, myMatrix, gamepadMatTemp);
-        }
-        gl.uniformMatrix4fv(shaderProgram.modelMat, false, gamepadMatHandle);
-        gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
-
+        renderEye(0, frameData.leftViewMatrix, frameData.leftProjectionMatrix);
+        renderEye(canvas.width / 2, frameData.rightViewMatrix, frameData.rightProjectionMatrix);
+        
         vrDisplay.submitFrame();
         vrDisplay.requestAnimationFrame(render);
     } else {
