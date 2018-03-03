@@ -1,7 +1,6 @@
 export default class Hmd {
-    constructor(canvas, shaderProgram) {
+    constructor(canvas) {
         this.canvas = canvas;
-        this.shaderProgram = shaderProgram;
 
         this.scene = [];
         this.mvMatrix = mat4.create();
@@ -10,7 +9,7 @@ export default class Hmd {
         this.viewMat = mat4.create();
         this.frameData = new VRFrameData();
 
-        this.gl = canvas.getContext(`webgl`);
+        this.gl = this.canvas.getContext(`webgl`);
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -37,19 +36,6 @@ export default class Hmd {
         window.requestAnimationFrame((t) => this.render(t));
     }
 
-    async getShader(url) {
-        const code = await (await fetch(url)).text();
-        const type = url.endsWith(`.frag`) ? this.gl.FRAGMENT_SHADER : this.gl.VERTEX_SHADER;
-        const shader = this.gl.createShader(type);
-        this.gl.shaderSource(shader, code);
-        this.gl.compileShader(shader);
-        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-            const msg = this.gl.getShaderInfoLog(shader);
-            throw new Error(`Error compiling shader ${url}: ${msg}`);
-        }
-        return shader;
-    }
-
     async initShaders() {
         const fragmentShader = await this.getShader(`shader/index.frag`);
         const vertexShader = await this.getShader(`shader/index.vert`);
@@ -72,6 +58,19 @@ export default class Hmd {
         this.shaderProgram.viewMat = this.gl.getUniformLocation(this.shaderProgram, `viewMat`);
         this.shaderProgram.modelMat = this.gl.getUniformLocation(this.shaderProgram, `modelMat`);
     };
+
+    async getShader(url) {
+        const code = await (await fetch(url)).text();
+        const type = url.endsWith(`.frag`) ? this.gl.FRAGMENT_SHADER : this.gl.VERTEX_SHADER;
+        const shader = this.gl.createShader(type);
+        this.gl.shaderSource(shader, code);
+        this.gl.compileShader(shader);
+        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+            const msg = this.gl.getShaderInfoLog(shader);
+            throw new Error(`Error compiling shader ${url}: ${msg}`);
+        }
+        return shader;
+    }
 
     getStandingViewMatrix(out, view) {
         mat4.invert(out, this.vrDisplay.stageParameters.sittingToStandingTransform);
