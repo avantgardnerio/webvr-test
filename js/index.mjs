@@ -1,22 +1,18 @@
 import Canvas from './Canvas.mjs';
 import Triangle from "./Triangle.mjs";
+import Gamepads from "./Gamepads.mjs";
 
 let gl = undefined;
 let shaderProgram;
 let mvMatrix = mat4.create();
 let pMatrix = mat4.create();
 const identity = mat4.create();
-let myMatrix = mat4.create();
 let viewMat = mat4.create();
-let gamepadMatTemp = mat4.create();
-let gamepadMatHandle = mat4.create();
-let triangleBuff;
-let lineBuff;
 let vrDisplay;
-let gamepads = [];
 const frameData = new VRFrameData();
 let canvas;
 let triangle;
+let gamepads;
 
 window.onload = async () => {
     canvas = new Canvas();
@@ -41,17 +37,7 @@ window.onload = async () => {
     if (vrDisplay.capabilities.canPresent !== true) {
         alert(`Headset cannot present!`);
     }
-
-    window.addEventListener('gamepadconnected', (e) => {
-        console.log(`Gamepad ${e.gamepad.index}`);
-        gamepads = navigator.getGamepads();
-        console.log(gamepads);
-    });
-    window.addEventListener('gamepaddisconnected', (e) => {
-        console.log(`Gamepad ${e.gamepad.index}`);
-        gamepads = navigator.getGamepads();
-    });
-
+    
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
@@ -107,14 +93,8 @@ const initBuffers = () => {
     triangle.init(gl);
 
     // lines
-    lineBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        0.0, 0.75, 1.2,
-        0.0, 0.75, 1.0
-    ]), gl.STATIC_DRAW);
-    lineBuff.itemSize = 3;
-    lineBuff.numItems = 2;
+    gamepads = new Gamepads();
+    gamepads.init(gl);
 };
 
 const getShader = async (url) => {
@@ -128,11 +108,6 @@ const getShader = async (url) => {
         throw new Error(`Error compiling shader ${url}: ${msg}`);
     }
     return shader;
-};
-
-const getPoseMatrix = (out, pose) => {
-    mat4.fromRotationTranslation(out, pose.orientation, pose.position);
-    mat4.multiply(out, vrDisplay.stageParameters.sittingToStandingTransform, out);
 };
 
 const getStandingViewMatrix = (out, view) => {
@@ -150,20 +125,7 @@ const renderEye = (left, view, projMat) => {
     triangle.render(gl, shaderProgram);
 
     // Controller
-    mat4.identity(myMatrix);
-    mat4.identity(gamepadMatHandle);
-    if (gamepads.length > 0) {
-        getPoseMatrix(myMatrix, gamepads[0].pose);
-        mat4.identity(gamepadMatTemp);
-        mat4.translate(gamepadMatTemp, gamepadMatTemp, [0, -0.5, -0.3]);
-        mat4.rotateX(gamepadMatTemp, gamepadMatTemp, -Math.PI * 0.2);
-        mat4.scale(gamepadMatTemp, gamepadMatTemp, [0.25, 0.25, 0.5]);
-        mat4.multiply(gamepadMatHandle, myMatrix, gamepadMatTemp);
-    }
-    gl.uniformMatrix4fv(shaderProgram.modelMat, false, gamepadMatHandle);
-    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
-    gl.vertexAttribPointer(shaderProgram.vertPosAttr, lineBuff.itemSize, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.LINE_STRIP, 0, lineBuff.numItems);
+    gamepads.render(gl, shaderProgram, vrDisplay);
 };
 
 const render = (t) => {
