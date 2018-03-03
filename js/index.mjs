@@ -53,11 +53,10 @@ const initGL = (canvas) => {
 };
 
 const onResize = () => {
-    if (vrDisplay && vrDisplay.isPresenting) {
-        const leftEye = vrDisplay.getEyeParameters(`left`);
-        const rightEye = vrDisplay.getEyeParameters(`right`);
-        canvas.width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
-        canvas.height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
+    if (hmd.isPresenting) {
+        const renderSize = hmd.renderSize;
+        canvas.width = renderSize[0];
+        canvas.height = renderSize[1];
     } else {
         canvas.width = canvas.offsetWidth * window.devicePixelRatio;
         canvas.height = canvas.offsetHeight * window.devicePixelRatio;

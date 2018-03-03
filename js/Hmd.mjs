@@ -29,6 +29,18 @@ export default class Hmd {
         this.scene.forEach(renderable => renderable.render(this.gl, this.shaderProgram, this.vrDisplay));
     }
 
+    get isPresenting() {
+        return this.vrDisplay && this.vrDisplay.isPresenting;
+    }
+
+    get renderSize() {
+        const leftEye = this.vrDisplay.getEyeParameters(`left`);
+        const rightEye = this.vrDisplay.getEyeParameters(`right`);
+        const width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
+        const height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
+        return [width, height];
+    }
+
     render(t) {
         this.vrDisplay.getFrameData(this.frameData);
         mat4.identity(this.identity);
