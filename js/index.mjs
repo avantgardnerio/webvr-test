@@ -5,7 +5,6 @@ import Hmd from './Hmd.mjs';
 
 let gl = undefined;
 let shaderProgram;
-let vrDisplay;
 let canvas;
 let triangle;
 let gamepads;
@@ -13,34 +12,32 @@ let hmd;
 
 window.onload = async () => {
     canvas = new Canvas();
-    canvas.onClick = async () => {
-        try {
-            await vrDisplay.requestPresent([{source: canvas.element}]);
-        } catch (ex) {
-            alert(`Error: ${ex}`);
-        }
-    };
     document.body.appendChild(canvas.element);
 
     initGL(canvas.element);
     await initShaders();
     initBuffers();
 
-    const displays = await navigator.getVRDisplays();
-    if (displays.length < 1) alert(`No headset detected!`);
-    vrDisplay = displays[0];
-    vrDisplay.depthNear = 0.1;
-    vrDisplay.depthFar = 1024.0;
-    if (vrDisplay.capabilities.canPresent !== true) {
-        alert(`Headset cannot present!`);
-    }
-    
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    hmd = new Hmd(vrDisplay, gl, canvas, shaderProgram);
+    hmd = new Hmd(gl, canvas.element, shaderProgram);
     hmd.scene.push(triangle);
     hmd.scene.push(gamepads);
+    try {
+        await hmd.init();
+    } catch (ex) {
+        console.error(ex);
+        alert(`Error: ${ex}`);
+    }
+    canvas.onClick = async () => {
+        try {
+            await hmd.requestPresent();
+        } catch (ex) {
+            console.error(ex);
+            alert(`Error: ${ex}`);
+        }
+    };
 
     window.addEventListener(`resize`, onResize, false);
     onResize();

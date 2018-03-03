@@ -1,6 +1,5 @@
 export default class Hmd {
-    constructor(vrDisplay, gl, canvas, shaderProgram) {
-        this.vrDisplay = vrDisplay;
+    constructor(gl, canvas, shaderProgram) {
         this.gl = gl;
         this.canvas = canvas;
         this.shaderProgram = shaderProgram;
@@ -11,7 +10,19 @@ export default class Hmd {
         this.identity = mat4.create();
         this.viewMat = mat4.create();
         this.frameData = new VRFrameData();
+    }
 
+    async init() {
+        const displays = await navigator.getVRDisplays();
+        if (displays.length < 1) {
+            throw new Error(`No headset detected!`);
+        }
+        this.vrDisplay = displays[0];
+        this.vrDisplay.depthNear = 0.1;
+        this.vrDisplay.depthFar = 1024.0;
+        if (this.vrDisplay.capabilities.canPresent !== true) {
+            throw new Error(`Headset cannot present!`);
+        }
         window.requestAnimationFrame((t) => this.render(t));
     }
 
@@ -39,6 +50,10 @@ export default class Hmd {
         const width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
         const height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
         return [width, height];
+    }
+
+    async requestPresent() {
+        await this.vrDisplay.requestPresent([{source: this.canvas}]);
     }
 
     render(t) {
