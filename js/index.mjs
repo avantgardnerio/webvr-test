@@ -1,4 +1,5 @@
 import Canvas from './Canvas.mjs';
+import Triangle from "./Triangle.mjs";
 
 let gl = undefined;
 let shaderProgram;
@@ -15,6 +16,7 @@ let vrDisplay;
 let gamepads = [];
 const frameData = new VRFrameData();
 let canvas;
+let triangle;
 
 window.onload = async () => {
     canvas = new Canvas();
@@ -101,16 +103,8 @@ const initShaders = async () => {
 
 const initBuffers = () => {
     // Triangle
-    triangleBuff = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
-    const vertices = [
-        0.0, 0.5, -1.0,
-        -0.5, -0.5, -1.0,
-        0.5, -0.5, -1.0
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    triangleBuff.itemSize = 3;
-    triangleBuff.numItems = 3;
+    triangle = new Triangle();
+    triangle.init(gl);
 
     // lines
     lineBuff = gl.createBuffer();
@@ -153,10 +147,7 @@ const renderEye = (left, view, projMat) => {
     gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
 
     // Triangles
-    gl.uniformMatrix4fv(shaderProgram.modelMat, false, identity);
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
-    gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
+    triangle.render(gl, shaderProgram);
 
     // Controller
     mat4.identity(myMatrix);
@@ -194,12 +185,9 @@ const render = (t) => {
 
         mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -7.0]);
         mat4.rotateZ(mvMatrix, t * 0.001);
-        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
-        gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
-        gl.uniformMatrix4fv(shaderProgram.viewMat, false, pMatrix);
-        gl.uniformMatrix4fv(shaderProgram.modelMat, false, mvMatrix);
-        gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
 
+        triangle.render(gl, shaderProgram);
+        
         window.requestAnimationFrame(render);
     }
 };
