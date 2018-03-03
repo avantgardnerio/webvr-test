@@ -1,3 +1,5 @@
+import Canvas from './Canvas.mjs';
+
 let gl = undefined;
 let shaderProgram;
 let mvMatrix = mat4.create();
@@ -15,21 +17,17 @@ const frameData = new VRFrameData();
 let canvas;
 
 window.onload = async () => {
-    canvas = document.createElement(`canvas`);
-    canvas.width = 500;
-    canvas.height = 500;
-    canvas.style.height = `100%`;
-    canvas.style.width = `100%`;
-    canvas.onclick = async () => {
+    canvas = new Canvas();
+    canvas.onClick = async () => {
         try {
-            const res = await vrDisplay.requestPresent([{source: canvas}]);
+            await vrDisplay.requestPresent([{source: canvas.element}]);
         } catch (ex) {
-            console.error(ex);
+            alert(`Error: ${ex}`);
         }
     };
-    document.body.appendChild(canvas);
+    document.body.appendChild(canvas.element);
 
-    initGL(canvas);
+    initGL(canvas.element);
     await initShaders();
     initBuffers();
 
