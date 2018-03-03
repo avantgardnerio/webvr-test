@@ -1,18 +1,15 @@
 import Canvas from './Canvas.mjs';
 import Triangle from "./Triangle.mjs";
 import Gamepads from "./Gamepads.mjs";
+import Hmd from './Hmd.mjs';
 
 let gl = undefined;
 let shaderProgram;
-let mvMatrix = mat4.create();
-let pMatrix = mat4.create();
-const identity = mat4.create();
-let viewMat = mat4.create();
 let vrDisplay;
-const frameData = new VRFrameData();
 let canvas;
 let triangle;
 let gamepads;
+let hmd;
 
 window.onload = async () => {
     canvas = new Canvas();
@@ -41,7 +38,10 @@ window.onload = async () => {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    window.requestAnimationFrame(render);
+    hmd = new Hmd(vrDisplay, gl, canvas, shaderProgram);
+    hmd.scene.push(triangle);
+    hmd.scene.push(gamepads);
+
     window.addEventListener(`resize`, onResize, false);
     onResize();
 };
@@ -108,48 +108,4 @@ const getShader = async (url) => {
         throw new Error(`Error compiling shader ${url}: ${msg}`);
     }
     return shader;
-};
-
-const getStandingViewMatrix = (out, view) => {
-    mat4.invert(out, vrDisplay.stageParameters.sittingToStandingTransform);
-    mat4.multiply(out, view, out);
-};
-
-const renderEye = (left, view, projMat) => {
-    gl.viewport(left, 0, canvas.width / 2, canvas.height);
-    getStandingViewMatrix(viewMat, view);
-    gl.uniformMatrix4fv(shaderProgram.projectionMat, false, projMat);
-    gl.uniformMatrix4fv(shaderProgram.viewMat, false, viewMat);
-
-    // Triangles
-    triangle.render(gl, shaderProgram);
-
-    // Controller
-    gamepads.render(gl, shaderProgram, vrDisplay);
-};
-
-const render = (t) => {
-    vrDisplay.getFrameData(frameData);
-    mat4.identity(identity);
-    if (vrDisplay.isPresenting) {
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        renderEye(0, frameData.leftViewMatrix, frameData.leftProjectionMatrix);
-        renderEye(canvas.width / 2, frameData.rightViewMatrix, frameData.rightProjectionMatrix);
-        
-        vrDisplay.submitFrame();
-        vrDisplay.requestAnimationFrame(render);
-    } else {
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
-        mat4.identity(mvMatrix);
-
-        mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -7.0]);
-        mat4.rotateZ(mvMatrix, t * 0.001);
-
-        triangle.render(gl, shaderProgram);
-        
-        window.requestAnimationFrame(render);
-    }
 };
