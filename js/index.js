@@ -1,3 +1,4 @@
+const PLAYER_HEIGHT = 1.65;
 let gl = undefined;
 let shaderProgram;
 let mvMatrix = mat4.create();
@@ -77,6 +78,13 @@ const initBuffers = () => {
     lineBuff.numItems = 2;
 };
 
+const getPoseMatrix = (out, pose) => {
+    let orientation = pose && pose.orientation;
+    let position = pose && pose.position;
+    mat4.fromRotationTranslation(out, orientation, position);
+    mat4.multiply(out, vrDisplay.stageParameters.sittingToStandingTransform, out);
+};
+
 const render = (t) => {
     vrDisplay.getFrameData(frameData);
     mat4.identity(mMatrix);
@@ -87,7 +95,7 @@ const render = (t) => {
 
         // Left
         mat4.identity(myMatrix);
-        mat4.multiply(frameData.leftProjectionMatrix, frameData.leftViewMatrix, myMatrix);
+        mat4.multiply(myMatrix, frameData.leftProjectionMatrix, frameData.leftViewMatrix);
         gl.viewport(0, 0, gl.viewportWidth / 2, gl.viewportHeight);
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, myMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, identity);
@@ -97,8 +105,12 @@ const render = (t) => {
         gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
 
         mat4.identity(myMatrix);
-        if(gamepads.length > 0) {
-            quat4.toMat4(gamepads[0].pose.orientation, myMatrix);
+        if (gamepads.length > 0) {
+            const gamepad = gamepads[0];
+            getPoseMatrix(myMatrix, {
+                position: gamepad.pose && gamepad.pose.position,
+                orientation: [0, 0, 0, 1]
+            });
         }
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, myMatrix);
         gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
@@ -107,7 +119,7 @@ const render = (t) => {
 
         // Right
         mat4.identity(myMatrix);
-        mat4.multiply(frameData.rightProjectionMatrix, frameData.rightViewMatrix, myMatrix);
+        mat4.multiply(myMatrix, frameData.rightProjectionMatrix, frameData.rightViewMatrix);
         gl.viewport(gl.viewportWidth / 2, 0, gl.viewportWidth / 2, gl.viewportHeight);
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, myMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, identity);
@@ -117,8 +129,12 @@ const render = (t) => {
         gl.drawArrays(gl.TRIANGLES, 0, triangleBuff.numItems);
 
         mat4.identity(myMatrix);
-        if(gamepads.length > 0) {
-            quat4.toMat4(gamepads[0].pose.orientation, myMatrix);
+        if (gamepads.length > 0) {
+            const gamepad = gamepads[0];
+            getPoseMatrix(myMatrix, {
+                position: gamepad.pose && gamepad.pose.position,
+                orientation: [0, 0, 0, 1]
+            });
         }
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, myMatrix);
         gl.bindBuffer(gl.ARRAY_BUFFER, lineBuff);
@@ -130,10 +146,10 @@ const render = (t) => {
     } else {
         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+        mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
         mat4.identity(mvMatrix);
 
-        mat4.translate(mvMatrix, [0.0, 0.0, -7.0]);
+        mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, -7.0]);
         mat4.rotateZ(mvMatrix, t * 0.001);
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuff);
         gl.vertexAttribPointer(shaderProgram.vertPosAttr, triangleBuff.itemSize, gl.FLOAT, false, 0, 0);
