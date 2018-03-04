@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "lr-http-server .",
+    "start": "http-server .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/bgard6977/webvr-test#readme",
   "dependencies": {
     "gl-matrix": "^2.4.0",
+    "http-server": "^0.11.1",
     "lr-http-server": "^0.1.5",
     "redux": "^3.7.2"
   }
