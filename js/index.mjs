@@ -30,6 +30,11 @@ window.onload = async () => {
         if(!tool) return;
         tool.onRelease(gpIdx, btnIdx, positions);
     };
+    gamepads.onMove = (positions) => {
+        const tool = tools[mode];
+        if(!tool) return;
+        tool.onMove(positions);
+    };
 
     const hmd = new Hmd(canvas.element);
     try {

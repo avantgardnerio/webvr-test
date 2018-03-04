@@ -29,6 +29,7 @@ export default class Gamepads {
                 if(wasPressed && !isPressed && this.onRelease) this.onRelease(gpIdx, btnIdx, this.positions);
                 this.state[gpIdx][btnIdx] = isPressed;
             }
+            if(this.onMove) this.onMove(this.positions);
         }
     }
 
@@ -44,8 +45,8 @@ export default class Gamepads {
         this.buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            0.0, 0.75, 1.2,
-            0.0, 0.75, 1.0
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.1
         ]), gl.STATIC_DRAW);
     }
     
@@ -58,13 +59,11 @@ export default class Gamepads {
             mat4.multiply(this.myMatrix, vrDisplay.stageParameters.sittingToStandingTransform, this.myMatrix);
 
             mat4.identity(this.gamepadMatTemp);
-            mat4.translate(this.gamepadMatTemp, this.gamepadMatTemp, [0, -0.5, -0.3]);
-            mat4.rotateX(this.gamepadMatTemp, this.gamepadMatTemp, -Math.PI * 0.2);
-            mat4.scale(this.gamepadMatTemp, this.gamepadMatTemp, [0.25, 0.25, 0.5]);
+            mat4.rotateX(this.gamepadMatTemp, this.gamepadMatTemp, -Math.PI * 0.2); // Barrel of gun, not the grip
             mat4.multiply(this.gamepadMatHandle, this.myMatrix, this.gamepadMatTemp);
 
             this.positions[gpIdx] = this.positions[gpIdx] || [0,0,0];
-            vec3.transformMat4(this.positions[gpIdx], this.positions[gpIdx], this.gamepadMatHandle);
+            vec3.transformMat4(this.positions[gpIdx], origin, this.gamepadMatHandle);
             gpIdx++;
 
             gl.uniformMatrix4fv(shaderProgram.modelMat, false, this.gamepadMatHandle);
