@@ -4,6 +4,7 @@ import Triangle from "./renderables/Triangle.mjs";
 import Gamepads from "./renderables/Gamepads.mjs";
 import Hmd from './Hmd.mjs';
 import reducer from './reducers/reducer.mjs';
+import RoomTool from "./tools/RoomTool.mjs";
 
 window.onload = async () => {
     const canvas = new Canvas();
@@ -11,9 +12,24 @@ window.onload = async () => {
 
     const store = new Store(reducer);
 
+    const tools = {
+        room: new RoomTool()
+    };
+    let mode = `room`;
+
     const gamepads = new Gamepads();
-    gamepads.onPress = (gpIdx, btnIdx) => console.log(`Pressed ${btnIdx} on gamepad ${gpIdx}`);
-    gamepads.onRelease = (gpIdx, btnIdx) => console.log(`Released ${btnIdx} on gamepad ${gpIdx}`);
+    gamepads.onPress = (gpIdx, btnIdx, positions) => {
+        console.log(`Pressed ${btnIdx} on gamepad ${gpIdx}`);
+        const tool = tools[mode];
+        if(!tool) return;
+        tool.onPress(gpIdx, btnIdx, positions);
+    };
+    gamepads.onRelease = (gpIdx, btnIdx, positions) => {
+        console.log(`Released ${btnIdx} on gamepad ${gpIdx}`);
+        const tool = tools[mode];
+        if(!tool) return;
+        tool.onRelease(gpIdx, btnIdx, positions);
+    };
 
     const hmd = new Hmd(canvas.element);
     try {
@@ -30,8 +46,9 @@ window.onload = async () => {
             alert(`Error: ${ex}`);
         }
     };
-    hmd.addToScene(new Triangle());
+    //hmd.addToScene(new Triangle());
     hmd.addToScene(gamepads);
+    hmd.addToScene(tools[`room`]);
 
     const onResize = () => {
         if (hmd.isPresenting) {
