@@ -1,11 +1,15 @@
-import Canvas from './Canvas.mjs';
-import Triangle from "./Triangle.mjs";
-import Gamepads from "./Gamepads.mjs";
+import Store from './Store.mjs';
+import Canvas from './components/Canvas.mjs';
+import Triangle from "./renderables/Triangle.mjs";
+import Gamepads from "./renderables/Gamepads.mjs";
 import Hmd from './Hmd.mjs';
+import reducer from './reducers/reducer.mjs';
 
 window.onload = async () => {
     const canvas = new Canvas();
     document.body.appendChild(canvas.element);
+
+    const store = new Store(reducer);
 
     const hmd = new Hmd(canvas.element);
     try {
