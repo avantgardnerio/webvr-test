@@ -19,6 +19,7 @@
   "homepage": "https://github.com/bgard6977/webvr-test#readme",
   "dependencies": {
     "gl-matrix": "^2.4.0",
-    "lr-http-server": "^0.1.5"
+    "lr-http-server": "^0.1.5",
+    "redux": "^3.7.2"
   }
 }

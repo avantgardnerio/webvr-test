@@ -1,4 +1,3 @@
-import Store from './Store.mjs';
 import Canvas from './components/Canvas.mjs';
 import Triangle from "./renderables/Triangle.mjs";
 import Gamepads from "./renderables/Gamepads.mjs";
@@ -10,7 +9,7 @@ window.onload = async () => {
     const canvas = new Canvas();
     document.body.appendChild(canvas.element);
 
-    const store = new Store(reducer);
+    const store = Redux.createStore(reducer);
 
     const tools = {
         room: new RoomTool()
