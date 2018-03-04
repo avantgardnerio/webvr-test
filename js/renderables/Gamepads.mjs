@@ -8,9 +8,25 @@ export default class Gamepads {
         this.myMatrix = mat4.create();
         this.gamepadMatTemp = mat4.create();
         this.gamepadMatHandle = mat4.create();
+        this.state = {};
 
         window.addEventListener('gamepadconnected', () => this.connected());
         window.addEventListener('gamepaddisconnected', () => this.disconnected());
+        window.setInterval(() => this.readInput(), 1000 / 90);
+    }
+
+    readInput() {
+        for(let gpIdx = 0; gpIdx < this.gamepads.length; gpIdx++) {
+            const gamepad = this.gamepads[gpIdx];
+            this.state[gpIdx] = this.state[gpIdx] || {};
+            for(let btnIdx = 0; btnIdx < gamepad.buttons.length; btnIdx++) {
+                const wasPressed = !!this.state[gpIdx][btnIdx];
+                const isPressed = gamepad.buttons[btnIdx].value === 1.0;
+                if(!wasPressed && isPressed && this.onPress) this.onPress(gpIdx, btnIdx);
+                if(wasPressed && !isPressed && this.onRelease) this.onRelease(gpIdx, btnIdx);
+                this.state[gpIdx][btnIdx] = isPressed;
+            }
+        }
     }
 
     connected() {
@@ -31,7 +47,7 @@ export default class Gamepads {
     }
 
     render(gl, shaderProgram, vrDisplay) {
-        this.gamepads.forEach(gamepad => {
+        for(let gamepad of this.gamepads) {
             mat4.identity(this.myMatrix);
             mat4.identity(this.gamepadMatHandle);
             if (this.gamepads.length > 0) {
@@ -48,6 +64,6 @@ export default class Gamepads {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
             gl.vertexAttribPointer(shaderProgram.vertPosAttr, this.itemSize, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.LINE_STRIP, 0, this.numItems);
-        });
+        }
     }
 }

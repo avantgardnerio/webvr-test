@@ -11,6 +11,10 @@ window.onload = async () => {
 
     const store = new Store(reducer);
 
+    const gamepads = new Gamepads();
+    gamepads.onPress = (gpIdx, btnIdx) => console.log(`Pressed ${btnIdx} on gamepad ${gpIdx}`);
+    gamepads.onRelease = (gpIdx, btnIdx) => console.log(`Released ${btnIdx} on gamepad ${gpIdx}`);
+
     const hmd = new Hmd(canvas.element);
     try {
         await hmd.init();
@@ -27,7 +31,7 @@ window.onload = async () => {
         }
     };
     hmd.addToScene(new Triangle());
-    hmd.addToScene(new Gamepads());
+    hmd.addToScene(gamepads);
 
     const onResize = () => {
         if (hmd.isPresenting) {
