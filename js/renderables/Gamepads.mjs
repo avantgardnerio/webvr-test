@@ -21,6 +21,7 @@ export default class Gamepads {
     readInput() {
         for(let gpIdx = 0; gpIdx < this.gamepads.length; gpIdx++) {
             const gamepad = this.gamepads[gpIdx];
+            if(!gamepad || !gamepad.buttons) continue;
             this.state[gpIdx] = this.state[gpIdx] || {};
             for(let btnIdx = 0; btnIdx < gamepad.buttons.length; btnIdx++) {
                 const wasPressed = !!this.state[gpIdx][btnIdx];
@@ -42,7 +43,7 @@ export default class Gamepads {
     }
 
     init(gl) {
-        this.buffer = gl.createBuffer();
+        if(!this.buffer) this.buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
             0.0, 0.0, 0.0,

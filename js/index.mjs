@@ -1,5 +1,5 @@
 import Canvas from './components/Canvas.mjs';
-import Triangle from "./renderables/Triangle.mjs";
+import Scene from './scene/Scene.mjs';
 import Gamepads from "./renderables/Gamepads.mjs";
 import Hmd from './Hmd.mjs';
 import reducer from './reducers/reducer.mjs';
@@ -10,9 +10,10 @@ window.onload = async () => {
     document.body.appendChild(canvas.element);
 
     const store = Redux.createStore(reducer);
+    const scene = new Scene(store);
 
     const tools = {
-        room: new RoomTool()
+        room: new RoomTool(store)
     };
     let mode = `room`;
 
@@ -50,7 +51,7 @@ window.onload = async () => {
             alert(`Error: ${ex}`);
         }
     };
-    //hmd.addToScene(new Triangle());
+    hmd.addToScene(scene);
     hmd.addToScene(gamepads);
     hmd.addToScene(tools[`room`]);
 

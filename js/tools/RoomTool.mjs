@@ -1,6 +1,10 @@
+import {addRoom} from '../actions/actions.mjs';
+
 export default class RoomTool {
 
-    constructor() {
+    constructor(store) {
+        this.store = store;
+
         this.dirty = true;
         this.vertices = [];
         this.identity = mat4.create();
@@ -14,7 +18,7 @@ export default class RoomTool {
         this.currentController = gpIdx;
         const position = positions[gpIdx];
         console.log(`Adding `, position);
-        if(this.mode === `draw`) {
+        if (this.mode === `draw`) {
             const vert = [this.snap(position[0]), this.snap(position[2])];
             this.vertices.push(vert);
             if (this.vertices.length === 1) {
@@ -28,6 +32,8 @@ export default class RoomTool {
                 this.ceiling = this.floor;
             }
         } else {
+            console.log(`dispatching!`);
+            this.store.dispatch(addRoom(this.vertices, this.floor, this.ceiling));
             this.vertices = [];
             this.floor = undefined;
             this.ceiling = undefined;
@@ -40,7 +46,7 @@ export default class RoomTool {
         if (this.currentController === undefined) return;
         if (this.vertices.length < 2) return;
         const position = positions[this.currentController];
-        if(this.mode === `draw`) {
+        if (this.mode === `draw`) {
             const vert = [this.snap(position[0]), this.snap(position[2])];
             this.vertices[this.vertices.length - 1] = vert;
         } else {
@@ -62,7 +68,7 @@ export default class RoomTool {
             acc.push(cur[0], this.floor, cur[1]);
             return acc;
         }, []);
-        if(this.ceiling) {
+        if (this.ceiling) {
             const ceiling = this.vertices.reduce((acc, cur) => {
                 acc.push(cur[0], this.ceiling, cur[1]);
                 return acc;
